@@ -55,7 +55,7 @@
             <button class="nav-link fw-bold" id="tab-search-btn" data-bs-toggle="pill" data-bs-target="#tab-search" type="button" onclick="loadInventoryData()">查詢與修改</button>
         </li>
         <li class="nav-item" id="tab-report-li" role="presentation">
-            <button class="nav-link fw-bold" id="tab-report-btn" data-bs-toggle="pill" data-bs-target="#tab-report" type="button">報表查詢</button>
+            <button class="nav-link fw-bold" id="tab-report-btn" data-bs-toggle="pill" data-bs-target="#tab-report" type="button" onclick="loadReport('inventory')">報表查詢</button>
         </li>
     </ul>
 
@@ -520,7 +520,7 @@
             document.getElementById('inItemCustom').classList.add('hidden');
             fetchAutoInboundNo();
         } catch (err) {
-            alert('❌ 寫入 Firebase 失敗：' + err.message);
+            alert('❌ 寫入 Firebase 失敗（請確認權限規則是否已發布）：' + err.message);
         }
     }
 
@@ -552,6 +552,7 @@
                     stock: data.stock !== undefined ? data.stock : data.total,
                     volunteer: data.volunteer || '',
                     vendor: data.vendor || '',
+                    time: data.time || '',
                     note1: data.note1 || '',
                     note2: data.note2 || ''
                 });
@@ -595,7 +596,61 @@
         renderTable(filtered);
     }
 
-    function loadReport(type) {}
+    // 📊 報表查詢（自動串接 Firestore 資料）
+    async function loadReport(type) {
+        try {
+            // 確保每次看報表時都有最新資料
+            if (allInventory.length === 0) {
+                const querySnapshot = await getDocs(collection(window.db, "inventory"));
+                allInventory = [];
+                querySnapshot.forEach((docSnap) => {
+                    let data = docSnap.data();
+                    allInventory.push({
+                        id: docSnap.id,
+                        inboundNo: data.inboundNo || '',
+                        item: data.item || '',
+                        boxes: data.boxes || 0,
+                        total: data.total || 0,
+                        stock: data.stock !== undefined ? data.stock : data.total,
+                        volunteer: data.volunteer || '',
+                        vendor: data.vendor || '',
+                        time: data.time || ''
+                    });
+                });
+            }
+
+            let container = document.getElementById('reportContainer');
+            if (type === 'inventory') {
+                // 彙整即時庫存
+                let summary = {};
+                allInventory.forEach(r => {
+                    if (!summary[r.item]) summary[r.item] = 0;
+                    summary[r.item] += Number(r.stock);
+                });
+
+                let html = `<table class="table table-bordered table-striped"><thead class="table-success"><tr><th>品項</th><th>即時總庫存</th></tr></thead><tbody>`;
+                for (let [item, stock] of Object.entries(summary)) {
+                    html += `<tr><td>${item}</td><td class="fw-bold text-success">${stock}</td></tr>`;
+                }
+                if (Object.keys(summary).length === 0) html += `<tr><td colspan="2" class="text-center text-muted">目前尚無庫存資料</td></tr>`;
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+            } else if (type === 'inbound') {
+                let html = `<table class="table table-bordered table-striped" style="font-size:0.85rem;"><thead class="table-success"><tr><th>時間</th><th>單號</th><th>品項</th><th>箱數</th><th>總數</th></tr></thead><tbody>`;
+                allInventory.forEach(r => {
+                    html += `<tr><td>${r.time}</td><td>${r.inboundNo}</td><td>${r.item}</td><td>${r.boxes}</td><td>${r.total}</td></tr>`;
+                });
+                if (allInventory.length === 0) html += `<tr><td colspan="5" class="text-center text-muted">目前尚無進貨紀錄</td></tr>`;
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `<div class="text-center text-muted py-3">此報表功能建置中</div>`;
+            }
+        } catch (err) {
+            console.error("載入報表失敗:", err);
+        }
+    }
+
     function saveEditedData() {}
 
     // 綁定全域函數供 HTML 呼叫
