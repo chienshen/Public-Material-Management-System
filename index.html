@@ -65,7 +65,7 @@
         <div class="tab-pane fade show active" id="tab-in">
             <div class="card p-4">
                 <h5 class="card-title text-success mb-3">📦 新增進貨資料</h5>
-                <form id="inboundForm" onsubmit="submitInbound(event)">
+                <form id="inboundForm" onsubmit="return false;">
                     <div class="mb-3">
                         <label class="form-label">進貨時間 (台灣時間)</label>
                         <input type="text" id="inTime" class="form-control" readonly>
@@ -105,7 +105,7 @@
                         <label class="form-label">備註欄位 2</label>
                         <input type="text" id="inNote2" class="form-control" placeholder="臨時備註 2">
                     </div>
-                    <button type="submit" class="btn btn-success w-100 btn-lg">確認送出進貨</button>
+                    <button type="button" class="btn btn-success w-100 btn-lg" onclick="handleInboundSubmit()">確認送出進貨</button>
                 </form>
             </div>
         </div>
@@ -114,7 +114,7 @@
         <div class="tab-pane fade" id="tab-out">
             <div class="card p-4">
                 <h5 class="card-title text-success mb-3">📤 領取/出貨登錄</h5>
-                <form id="outboundForm" onsubmit="submitOutbound(event)">
+                <form id="outboundForm" onsubmit="return false;">
                     <div class="mb-3">
                         <label class="form-label">領貨志工姓名</label>
                         <input type="text" id="outVolunteer" class="form-control" required>
@@ -166,7 +166,7 @@
                         </div>
                         <input type="text" id="outBoxNo" class="form-control" placeholder="若無上述選項請自行填寫">
                     </div>
-                    <button type="submit" class="btn btn-success w-100 btn-lg">確認送出出貨</button>
+                    <button type="button" class="btn btn-success w-100 btn-lg" onclick="alert('出貨對接中')">確認送出出貨</button>
                 </form>
             </div>
         </div>
@@ -175,7 +175,7 @@
         <div class="tab-pane fade" id="tab-return">
             <div class="card p-4">
                 <h5 class="card-title text-danger mb-3">🔄 退貨 / 歸還登錄</h5>
-                <form id="returnForm" onsubmit="submitReturn(event)">
+                <form id="returnForm" onsubmit="return false;">
                     <div class="mb-3">
                         <label class="form-label">退貨/歸還志工姓名</label>
                         <input type="text" id="retVolunteer" class="form-control" required placeholder="請輸入姓名">
@@ -227,7 +227,7 @@
                         </div>
                         <input type="text" id="retBoxNo" class="form-control" placeholder="若無上述選項請自行填寫">
                     </div>
-                    <button type="submit" class="btn btn-danger w-100 btn-lg">確認送出退貨歸還</button>
+                    <button type="button" class="btn btn-danger w-100 btn-lg" onclick="alert('退貨對接中')">確認送出退貨歸還</button>
                 </form>
             </div>
         </div>
@@ -271,41 +271,14 @@
     </div>
 </div>
 
-<!-- 修改資料 Modal -->
-<div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title">修改進貨資料</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="editRowIndex">
-        <div class="mb-3"><label class="form-label">收貨志工</label><input type="text" id="editVolunteer" class="form-control"></div>
-        <div class="mb-3"><label class="form-label">廠商名稱</label><input type="text" id="editVendor" class="form-control"></div>
-        <div class="mb-3"><label class="form-label">箱數</label><input type="number" id="editBoxes" class="form-control"></div>
-        <div class="mb-3"><label class="form-label">總數</label><input type="number" id="editTotal" class="form-control"></div>
-        <div class="mb-3"><label class="form-label">備註 1</label><input type="text" id="editNote1" class="form-control"></div>
-        <div class="mb-3"><label class="form-label">備註 2</label><input type="text" id="editNote2" class="form-control"></div>
-        <div class="mb-3"><label class="form-label text-danger fw-bold">異動原因說明 (必填)</label><input type="text" id="editReason" class="form-control" required placeholder="請說明修改原因"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-        <button type="button" class="btn btn-success" onclick="saveEditedData()">儲存修改</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- 全域 JavaScript 邏輯 -->
 <script type="module">
-    // 1. 從 Google CDN 引入 Firebase 模組
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 2. 你的 Firebase 設定
     const firebaseConfig = {
         apiKey: "AIzaSyCT9ZQRSCqa9SuOVZFVPSPiBnp5ExfJYc",
         authDomain: "public-material-managessystem.firebaseapp.com",
@@ -316,12 +289,10 @@
         measurementId: "G-BXYNLN7YLF"
     };
 
-    // 3. 初始化 Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     window.db = db;
-    console.log("Firebase 連線初始化完成！");
+    console.log("Firebase 模組初始化成功！");
 
     let globalItemsList = [];
     const STANDARD_BAG_ITEMS = [
@@ -336,7 +307,7 @@
         "60周年袋"
     ];
 
-    function verifyPassword() {
+    window.verifyPassword = function() {
         const pwd = document.getElementById('accessCode').value.trim();
         if (pwd === '1004') {
             showSystem(['tab-in-li', 'tab-out-li', 'tab-return-li', 'tab-search-li', 'tab-report-li']);
@@ -347,7 +318,7 @@
         } else {
             alert('密碼不正確，請重新輸入！');
         }
-    }
+    };
 
     function showSystem(allowedTabs) {
         document.getElementById('loginSection').classList.add('hidden');
@@ -373,11 +344,11 @@
         fetchItems();
     }
 
-    function logout() {
+    window.logout = function() {
         document.getElementById('accessCode').value = '';
         document.getElementById('mainSystem').classList.add('hidden');
         document.getElementById('loginSection').classList.remove('hidden');
-    }
+    };
 
     function updateTaiwanTime() {
         const now = new Date();
@@ -414,7 +385,7 @@
         }
     }
 
-    function addItemRow(containerId, selectedItem = "", qty = 1) {
+    window.addItemRow = function(containerId, selectedItem = "", qty = 1) {
         let container = document.getElementById(containerId);
         if (!container) return;
         let rowId = containerId + '_' + Date.now() + Math.random().toString(36).substr(2, 5);
@@ -446,101 +417,112 @@
             </div>
         `;
         container.appendChild(div);
-    }
+    };
 
-    function removeRow(rowId, containerId) {
+    window.removeRow = function(rowId, containerId) {
         let container = document.getElementById(containerId);
         if (container && container.children.length > 1) {
             document.getElementById(rowId).remove();
         } else {
             alert('至少需保留一項明細！');
         }
-    }
+    };
 
-    function checkRowCustomItem(rowId) {
+    window.checkRowCustomItem = function(rowId) {
         let row = document.getElementById(rowId);
         let select = row.querySelector('.item-select');
         let customInput = row.querySelector('.item-custom');
         if (select.value === '__NEW__') {
             customInput.classList.remove('hidden');
-            customInput.required = true;
         } else {
             customInput.classList.add('hidden');
-            customInput.required = false;
         }
-    }
+    };
 
-    function loadPackageBag(containerId) {
+    window.loadPackageBag = function(containerId) {
         let container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
         STANDARD_BAG_ITEMS.forEach(item => {
             addItemRow(containerId, item, 1);
         });
-    }
+    };
 
-    function checkNewItemOption() {
+    window.checkNewItemOption = function() {
         let val = document.getElementById('inItemSelect').value;
         let customInput = document.getElementById('inItemCustom');
         if (val === '__NEW__') {
             customInput.classList.remove('hidden');
-            customInput.required = true;
         } else {
             customInput.classList.add('hidden');
-            customInput.required = false;
         }
-    }
+    };
 
-    function setBox(elementId, val) {
+    window.setBox = function(elementId, val) {
         document.getElementById(elementId).value = val;
-    }
+    };
 
-    // 📦 送出進貨（直接寫入 Firebase Firestore）
-    async function submitInbound(e) {
-        e.preventDefault();
+    // 📦 點擊按鈕寫入 Firebase Firestore
+    window.handleInboundSubmit = async function() {
+        let inboundNo = document.getElementById('inNo').value.trim();
+        let volunteer = document.getElementById('inVolunteer').value.trim();
+        let vendor = document.getElementById('inVendor').value.trim();
         let selectVal = document.getElementById('inItemSelect').value;
+        let boxes = document.getElementById('inBoxes').value;
+        let total = document.getElementById('inTotal').value;
+
+        if (!inboundNo || !volunteer || !vendor || !selectVal || !boxes || !total) {
+            alert('⚠️ 請完整填寫所有欄位（單號、志工、廠商、品項、箱數、總數）！');
+            return;
+        }
+
         let finalItem = (selectVal === '__NEW__') ? document.getElementById('inItemCustom').value.trim() : selectVal;
+        if (!finalItem) {
+            alert('⚠️ 請輸入自訂物品名稱！');
+            return;
+        }
 
         try {
+            // 直接對 Cloud Firestore 寫入
             await addDoc(collection(window.db, "inventory"), {
-                inboundNo: document.getElementById('inNo').value,
-                time: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
-                volunteer: document.getElementById('inVolunteer').value,
-                vendor: document.getElementById('inVendor').value,
+                inboundNo: inboundNo,
+                time: document.getElementById('inTime').value || new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+                volunteer: volunteer,
+                vendor: vendor,
                 item: finalItem,
-                boxes: Number(document.getElementById('inBoxes').value),
-                total: Number(document.getElementById('inTotal').value),
-                stock: Number(document.getElementById('inTotal').value),
+                boxes: Number(boxes),
+                total: Number(total),
+                stock: Number(total),
                 note1: document.getElementById('inNote1').value || '',
-                note2: document.getElementById('inNote2').value || ''
+                note2: document.getElementById('inNote2').value || '',
+                createdAt: new Date()
             });
 
-            alert('📦 進貨登錄成功，已直接存入 Firebase！');
-            document.getElementById('inboundForm').reset();
+            alert('✅【進貨成功】資料已成功存入 Firebase 雲端資料庫！');
+            
+            // 清空輸入欄位
+            document.getElementById('inVolunteer').value = '';
+            document.getElementById('inVendor').value = '';
+            document.getElementById('inBoxes').value = '';
+            document.getElementById('inTotal').value = '';
+            document.getElementById('inNote1').value = '';
+            document.getElementById('inNote2').value = '';
+            document.getElementById('inItemSelect').value = '';
             document.getElementById('inItemCustom').classList.add('hidden');
             fetchAutoInboundNo();
+
         } catch (err) {
-            alert('❌ 寫入 Firebase 失敗（請確認權限規則是否已發布）：' + err.message);
+            console.error("Firebase 寫入失敗:", err);
+            alert('❌ 寫入失敗！原因：' + err.message);
         }
-    }
+    };
 
-    function submitOutbound(e) {
-        e.preventDefault();
-        alert('出貨功能準備對接 Firebase！');
-    }
-
-    function submitReturn(e) {
-        e.preventDefault();
-        alert('退貨功能準備對接 Firebase！');
-    }
-
-    // 🔍 從 Firebase 讀取查詢資料
+    // 🔍 查詢與報表讀取功能
     let allInventory = [];
-    async function loadInventoryData() {
+    window.loadInventoryData = async function() {
         try {
             const querySnapshot = await getDocs(collection(window.db, "inventory"));
             allInventory = [];
-            
             querySnapshot.forEach((docSnap) => {
                 let data = docSnap.data();
                 allInventory.push({
@@ -551,10 +533,7 @@
                     total: data.total || 0,
                     stock: data.stock !== undefined ? data.stock : data.total,
                     volunteer: data.volunteer || '',
-                    vendor: data.vendor || '',
-                    time: data.time || '',
-                    note1: data.note1 || '',
-                    note2: data.note2 || ''
+                    vendor: data.vendor || ''
                 });
             });
 
@@ -563,13 +542,13 @@
             console.error("讀取 Firebase 失敗:", err);
             alert('❌ 讀取資料失敗：' + err.message);
         }
-    }
+    };
 
     function renderTable(data) {
         let tbody = document.getElementById('inventoryTableBody');
         tbody.innerHTML = '';
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">目前尚無進貨資料</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">目前尚無進貨資料，請先新增進貨！</td></tr>';
             return;
         }
         data.forEach(row => {
@@ -586,7 +565,7 @@
         });
     }
 
-    function filterTable() {
+    window.filterTable = function() {
         let keyword = document.getElementById('searchInput').value.toLowerCase();
         let filtered = allInventory.filter(r => 
             String(r.inboundNo).toLowerCase().includes(keyword) || 
@@ -594,81 +573,47 @@
             String(r.volunteer).toLowerCase().includes(keyword)
         );
         renderTable(filtered);
-    }
+    };
 
-    // 📊 報表查詢（自動串接 Firestore 資料）
-    async function loadReport(type) {
+    window.loadReport = async function(type) {
         try {
-            // 確保每次看報表時都有最新資料
-            if (allInventory.length === 0) {
-                const querySnapshot = await getDocs(collection(window.db, "inventory"));
-                allInventory = [];
-                querySnapshot.forEach((docSnap) => {
-                    let data = docSnap.data();
-                    allInventory.push({
-                        id: docSnap.id,
-                        inboundNo: data.inboundNo || '',
-                        item: data.item || '',
-                        boxes: data.boxes || 0,
-                        total: data.total || 0,
-                        stock: data.stock !== undefined ? data.stock : data.total,
-                        volunteer: data.volunteer || '',
-                        vendor: data.vendor || '',
-                        time: data.time || ''
-                    });
-                });
-            }
+            const querySnapshot = await getDocs(collection(window.db, "inventory"));
+            allInventory = [];
+            querySnapshot.forEach((docSnap) => {
+                let data = docSnap.data();
+                allInventory.push(data);
+            });
 
             let container = document.getElementById('reportContainer');
             if (type === 'inventory') {
-                // 彙整即時庫存
                 let summary = {};
                 allInventory.forEach(r => {
                     if (!summary[r.item]) summary[r.item] = 0;
-                    summary[r.item] += Number(r.stock);
+                    summary[r.item] += Number(r.stock || r.total);
                 });
 
                 let html = `<table class="table table-bordered table-striped"><thead class="table-success"><tr><th>品項</th><th>即時總庫存</th></tr></thead><tbody>`;
                 for (let [item, stock] of Object.entries(summary)) {
                     html += `<tr><td>${item}</td><td class="fw-bold text-success">${stock}</td></tr>`;
                 }
-                if (Object.keys(summary).length === 0) html += `<tr><td colspan="2" class="text-center text-muted">目前尚無庫存資料</td></tr>`;
+                if (Object.keys(summary).length === 0) html += `<tr><td colspan="2" class="text-center text-muted py-3">目前尚無庫存資料</td></tr>`;
                 html += `</tbody></table>`;
                 container.innerHTML = html;
             } else if (type === 'inbound') {
                 let html = `<table class="table table-bordered table-striped" style="font-size:0.85rem;"><thead class="table-success"><tr><th>時間</th><th>單號</th><th>品項</th><th>箱數</th><th>總數</th></tr></thead><tbody>`;
                 allInventory.forEach(r => {
-                    html += `<tr><td>${r.time}</td><td>${r.inboundNo}</td><td>${r.item}</td><td>${r.boxes}</td><td>${r.total}</td></tr>`;
+                    html += `<tr><td>${r.time || ''}</td><td>${r.inboundNo || ''}</td><td>${r.item || ''}</td><td>${r.boxes || 0}</td><td>${r.total || 0}</td></tr>`;
                 });
-                if (allInventory.length === 0) html += `<tr><td colspan="5" class="text-center text-muted">目前尚無進貨紀錄</td></tr>`;
+                if (allInventory.length === 0) html += `<tr><td colspan="5" class="text-center text-muted py-3">目前尚無進貨紀錄</td></tr>`;
                 html += `</tbody></table>`;
                 container.innerHTML = html;
             } else {
-                container.innerHTML = `<div class="text-center text-muted py-3">此報表功能建置中</div>`;
+                container.innerHTML = `<div class="text-center text-muted py-3">此報表對接中</div>`;
             }
         } catch (err) {
             console.error("載入報表失敗:", err);
         }
-    }
-
-    function saveEditedData() {}
-
-    // 綁定全域函數供 HTML 呼叫
-    window.verifyPassword = verifyPassword;
-    window.logout = logout;
-    window.checkNewItemOption = checkNewItemOption;
-    window.addItemRow = addItemRow;
-    window.removeRow = removeRow;
-    window.checkRowCustomItem = checkRowCustomItem;
-    window.loadPackageBag = loadPackageBag;
-    window.setBox = setBox;
-    window.submitInbound = submitInbound;
-    window.submitOutbound = submitOutbound;
-    window.submitReturn = submitReturn;
-    window.loadInventoryData = loadInventoryData;
-    window.filterTable = filterTable;
-    window.loadReport = loadReport;
-    window.saveEditedData = saveEditedData;
+    };
 </script>
 </body>
 </html>
