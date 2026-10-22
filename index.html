@@ -303,9 +303,9 @@
 <script type="module">
     // 1. 從 Google CDN 引入 Firebase 模組
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 2. 貼上你剛才從 Firebase 取得的設定
+    // 2. 你的 Firebase 設定
     const firebaseConfig = {
         apiKey: "AIzaSyCT9ZQRSCqa9SuOVZFVPSPiBnp5ExfJYc",
         authDomain: "public-material-managessystem.firebaseapp.com",
@@ -320,7 +320,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 讓全域可以存取 db
     window.db = db;
     console.log("Firebase 連線初始化完成！");
 
@@ -387,7 +386,6 @@
     }
 
     function fetchAutoInboundNo() {
-        // 暫時預設單號格式，後續可改為 Firebase 讀寫
         if(document.getElementById('inNo')) {
             const now = new Date();
             const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
@@ -396,7 +394,6 @@
     }
 
     function fetchItems() {
-        // 暫時給予預設品項，後續可改接 Firebase 讀取
         globalItemsList = STANDARD_BAG_ITEMS;
         let inSelect = document.getElementById('inItemSelect');
         if (inSelect) {
@@ -498,9 +495,33 @@
         document.getElementById(elementId).value = val;
     }
 
-    function submitInbound(e) {
+    // 📦 送出進貨（直接寫入 Firebase Firestore）
+    async function submitInbound(e) {
         e.preventDefault();
-        alert('進貨功能準備對接 Firebase！');
+        let selectVal = document.getElementById('inItemSelect').value;
+        let finalItem = (selectVal === '__NEW__') ? document.getElementById('inItemCustom').value.trim() : selectVal;
+
+        try {
+            await addDoc(collection(window.db, "inventory"), {
+                inboundNo: document.getElementById('inNo').value,
+                time: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+                volunteer: document.getElementById('inVolunteer').value,
+                vendor: document.getElementById('inVendor').value,
+                item: finalItem,
+                boxes: Number(document.getElementById('inBoxes').value),
+                total: Number(document.getElementById('inTotal').value),
+                stock: Number(document.getElementById('inTotal').value),
+                note1: document.getElementById('inNote1').value || '',
+                note2: document.getElementById('inNote2').value || ''
+            });
+
+            alert('📦 進貨登錄成功，已直接存入 Firebase！');
+            document.getElementById('inboundForm').reset();
+            document.getElementById('inItemCustom').classList.add('hidden');
+            fetchAutoInboundNo();
+        } catch (err) {
+            alert('❌ 寫入 Firebase 失敗：' + err.message);
+        }
     }
 
     function submitOutbound(e) {
@@ -513,15 +534,71 @@
         alert('退貨功能準備對接 Firebase！');
     }
 
-    function loadInventoryData() {
-        console.log('載入查詢資料');
+    // 🔍 從 Firebase 讀取查詢資料
+    let allInventory = [];
+    async function loadInventoryData() {
+        try {
+            const querySnapshot = await getDocs(collection(window.db, "inventory"));
+            allInventory = [];
+            
+            querySnapshot.forEach((docSnap) => {
+                let data = docSnap.data();
+                allInventory.push({
+                    id: docSnap.id,
+                    inboundNo: data.inboundNo || '',
+                    item: data.item || '',
+                    boxes: data.boxes || 0,
+                    total: data.total || 0,
+                    stock: data.stock !== undefined ? data.stock : data.total,
+                    volunteer: data.volunteer || '',
+                    vendor: data.vendor || '',
+                    note1: data.note1 || '',
+                    note2: data.note2 || ''
+                });
+            });
+
+            renderTable(allInventory);
+        } catch (err) {
+            console.error("讀取 Firebase 失敗:", err);
+            alert('❌ 讀取資料失敗：' + err.message);
+        }
     }
 
-    function filterTable() {}
+    function renderTable(data) {
+        let tbody = document.getElementById('inventoryTableBody');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">目前尚無進貨資料</td></tr>';
+            return;
+        }
+        data.forEach(row => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${row.inboundNo}</td>
+                    <td>${row.item}</td>
+                    <td>${row.boxes}</td>
+                    <td>${row.total}</td>
+                    <td><span class="badge bg-success">${row.stock}</span></td>
+                    <td><button class="btn btn-sm btn-outline-primary" onclick="alert('修改功能建置中')">修改</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function filterTable() {
+        let keyword = document.getElementById('searchInput').value.toLowerCase();
+        let filtered = allInventory.filter(r => 
+            String(r.inboundNo).toLowerCase().includes(keyword) || 
+            String(r.item).toLowerCase().includes(keyword) || 
+            String(r.volunteer).toLowerCase().includes(keyword)
+        );
+        renderTable(filtered);
+    }
+
     function loadReport(type) {}
     function saveEditedData() {}
 
-    // 關鍵：將這些函數掛載到 window 全域，讓 HTML 的 onclick 可以呼叫
+    // 綁定全域函數供 HTML 呼叫
     window.verifyPassword = verifyPassword;
     window.logout = logout;
     window.checkNewItemOption = checkNewItemOption;
