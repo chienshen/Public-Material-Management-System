@@ -166,7 +166,7 @@
                         </div>
                         <input type="text" id="outBoxNo" class="form-control" placeholder="若無上述選項請自行填寫">
                     </div>
-                    <button type="button" class="btn btn-success w-100 btn-lg" onclick="alert('出貨對接中')">確認送出出貨</button>
+                    <button type="button" class="btn btn-success w-100 btn-lg" onclick="alert('出貨功能對接中')">確認送出出貨</button>
                 </form>
             </div>
         </div>
@@ -227,7 +227,7 @@
                         </div>
                         <input type="text" id="retBoxNo" class="form-control" placeholder="若無上述選項請自行填寫">
                     </div>
-                    <button type="button" class="btn btn-danger w-100 btn-lg" onclick="alert('退貨對接中')">確認送出退貨歸還</button>
+                    <button type="button" class="btn btn-danger w-100 btn-lg" onclick="alert('退貨功能對接中')">確認送出退貨歸還</button>
                 </form>
             </div>
         </div>
@@ -274,7 +274,7 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- 全域 JavaScript 邏輯 -->
+<!-- Firebase 核心邏輯 -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -462,8 +462,9 @@
         document.getElementById(elementId).value = val;
     };
 
-    // 📦 點擊按鈕寫入 Firebase Firestore
+    // 📦 點擊按鈕寫入 Firebase Firestore (強固版)
     window.handleInboundSubmit = async function() {
+        console.log("正在執行 handleInboundSubmit...");
         let inboundNo = document.getElementById('inNo').value.trim();
         let volunteer = document.getElementById('inVolunteer').value.trim();
         let vendor = document.getElementById('inVendor').value.trim();
@@ -472,7 +473,7 @@
         let total = document.getElementById('inTotal').value;
 
         if (!inboundNo || !volunteer || !vendor || !selectVal || !boxes || !total) {
-            alert('⚠️ 請完整填寫所有欄位（單號、志工、廠商、品項、箱數、總數）！');
+            alert('⚠️ 請完整填寫所有欄位！');
             return;
         }
 
@@ -483,8 +484,8 @@
         }
 
         try {
-            // 直接對 Cloud Firestore 寫入
-            await addDoc(collection(window.db, "inventory"), {
+            // 明確寫入 "inventory" 集合
+            const docRef = await addDoc(collection(window.db, "inventory"), {
                 inboundNo: inboundNo,
                 time: document.getElementById('inTime').value || new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
                 volunteer: volunteer,
@@ -498,9 +499,10 @@
                 createdAt: new Date()
             });
 
+            console.log("寫入成功，文件 ID: ", docRef.id);
             alert('✅【進貨成功】資料已成功存入 Firebase 雲端資料庫！');
             
-            // 清空輸入欄位
+            // 清空欄位
             document.getElementById('inVolunteer').value = '';
             document.getElementById('inVendor').value = '';
             document.getElementById('inBoxes').value = '';
@@ -512,12 +514,12 @@
             fetchAutoInboundNo();
 
         } catch (err) {
-            console.error("Firebase 寫入失敗:", err);
-            alert('❌ 寫入失敗！原因：' + err.message);
+            console.error("Firebase 寫入錯誤:", err);
+            alert('❌ 寫入 Firebase 失敗：' + err.message);
         }
     };
 
-    // 🔍 查詢與報表讀取功能
+    // 🔍 從 Firebase 讀取查詢資料
     let allInventory = [];
     window.loadInventoryData = async function() {
         try {
@@ -548,7 +550,7 @@
         let tbody = document.getElementById('inventoryTableBody');
         tbody.innerHTML = '';
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">目前尚無進貨資料，請先新增進貨！</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">目前尚無進貨資料（雲端為空）</td></tr>';
             return;
         }
         data.forEach(row => {
